@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Una cita para ti, Gordi</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,500;1,500&family=Nunito:wght@400;700&display=swap">
+<style>
+:root{--bg:#FFF4EE;--card:#fff;--ink:#4A2A35;--muted:#9A7683;--rose:#F4A9BC;--rose-d:#D9577E;--blush:#FFE1E8;--line:#F6CBD6;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#2A1820;--card:#3A2230;--ink:#FFE8EE;--muted:#D2A7B5;--rose:#8E3F5A;--rose-d:#FF8FB1;--blush:#4A2A3A;--line:#5A3445}}
+:root[data-theme="dark"]{--bg:#2A1820;--card:#3A2230;--ink:#FFE8EE;--muted:#D2A7B5;--rose:#8E3F5A;--rose-d:#FF8FB1;--blush:#4A2A3A;--line:#5A3445}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;min-height:100vh;background:var(--bg);color:var(--ink);font:400 17px/1.5 Nunito,system-ui,sans-serif}
+#app{max-width:480px;margin:0 auto;padding:20px 20px 32px;min-height:100vh;display:flex;flex-direction:column}
+.top{display:flex;align-items:center;gap:12px;height:40px}
+.back{border:0;background:var(--blush);color:var(--rose-d);width:40px;height:40px;border-radius:50%;font-size:20px;cursor:pointer}
+.back[hidden]{visibility:hidden;display:block}
+.bar{flex:1;height:8px;background:var(--blush);border-radius:8px;overflow:hidden}
+.bar i{display:block;height:100%;background:var(--rose-d);border-radius:8px;transition:width .4s}
+.screen{flex:1;display:flex;flex-direction:column;padding-top:28px;animation:in .35s ease}
+@keyframes in{from{opacity:0;transform:translateX(18px)}to{opacity:1;transform:none}}
+h1,h2{font:italic 500 30px/1.2 Fraunces,Georgia,serif;margin:0 0 8px}
+p.sub{color:var(--muted);margin:0 0 22px}
+.hero{font-size:72px;text-align:center;margin:30px 0 10px}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.card{background:var(--card);border:2px solid var(--line);border-radius:20px;padding:18px 10px;text-align:center;font:700 16px/1.25 Nunito,sans-serif;color:var(--ink);cursor:pointer;min-height:104px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;transition:transform .15s,border-color .15s,background .15s}
+.card b{font-size:34px;line-height:1}
+.card:active,.card.on{transform:scale(.96);border-color:var(--rose-d);background:var(--blush)}
+.card:focus-visible,.btn:focus-visible,.back:focus-visible,textarea:focus-visible{outline:3px solid var(--rose-d);outline-offset:2px}
+.list .card{flex-direction:row;justify-content:flex-start;text-align:left;padding:16px 18px;min-height:64px;margin-bottom:12px;width:100%}
+.btn{border:0;background:var(--rose-d);color:#fff;font:700 18px Nunito,sans-serif;border-radius:999px;padding:16px 24px;width:100%;cursor:pointer;margin-top:auto}
+.btn.alt{background:var(--blush);color:var(--rose-d);margin-top:12px}
+.spacer{flex:1;min-height:24px}
+textarea{width:100%;min-height:150px;border:2px solid var(--line);border-radius:20px;background:var(--card);color:var(--ink);font:400 17px/1.5 Nunito,sans-serif;padding:16px;resize:none;margin-bottom:16px}
+.sum{background:var(--card);border:2px solid var(--line);border-radius:22px;padding:6px 18px;margin-bottom:18px}
+.row{display:flex;gap:14px;align-items:center;padding:14px 0;border-bottom:1px dashed var(--line)}
+.row:last-child{border:0}
+.row span{font-size:30px}
+.row small{display:block;color:var(--muted);font-size:14px}
+.row div{font-weight:700}
+.bubble{background:var(--card);border:2px solid var(--line);border-radius:24px;padding:24px 20px;text-align:center;font:italic 500 25px/1.35 Fraunces,Georgia,serif;margin-top:8px}
+#cf{position:fixed;inset:0;pointer-events:none;z-index:9}
+@media (prefers-reduced-motion:reduce){.screen{animation:none}.bar i{transition:none}}
+</style>
+</head>
+<body>
+<div id="app">
+  <div class="top"><button class="back" id="back" aria-label="Volver" hidden>←</button><div class="bar"><i id="fill"></i></div></div>
+  <div id="view"></div>
+</div>
+<canvas id="cf"></canvas>
+<script>
+var TYPES=[
+ {id:"Tradicional",e:"🍷",p:[["Vino Tinto","🍷"],["El Toro","🥩"],["Villa Paramesa","🍽️"]]},
+ {id:"Americana",e:"🍔",p:[["Brindis Burguer","🍔"],["Juancho's","🔥"],["Nache's","🌮"],["Foosters Hollywood","🎬"]]},
+ {id:"Japonesa",e:"🍣",p:[["Sibuya","🍣"],["Jiapan","🥢"],["Wabisabi","🍱"]]},
+ {id:"Asiática",e:"🍜",p:[["La Gran Muralla","🥟"],["Kanama Noodles","🍜"],["Buga Ramen","🍥"]]},
+ {id:"Comida rápida",e:"🍟",p:[["McDonald's","🍟"],["Burger King","👑"]]},
+ {id:"Probar algo nuevo",e:"✨",p:[["Sibaritas Klub","✨"]]}];
+var SWEET=[["Postre en el restaurante","🍰"],["Helado paseando","🍦"],["Una copa después","🥂"],["Con esto ya voy bien","🛋️"]];
+var JOKES={
+"Vino Tinto":["🍷🥩🌭","¿Mejor menú del mundo? ¿Chuletón, chorizo con chimichurri? 😏🔥"],
+"El Toro":["🐂🥩🤞","Un buen chuletón. Esperemos que mejor que la otra vez 😅"],
+"Villa Paramesa":["🏛️🧭🤔","Por probar algo nuevo 🕵️"],
+"Brindis Burguer":["🍔🌶️🥂","Un buen par de hamburguesitas de piparra 🌶️😋"],
+"Juancho's":["🍔🍟😍","Hamburguesitas con patatas 🍟 ¡Clásico!"],
+"Nache's":["🌮😋👌","Como las últimas veces, que están mu ricas 🤤"],
+"Foosters Hollywood":["🎬🍟🌟","Unas buenas patatas Fooster, que hace mucho que no las comemos 🥔🎉"],
+"Sibuya":["🍣🥢😌","Un poquito de sushi, que no falla 🍣✅"],
+"Jiapan":["🥢🆕🤤","Por probar algo nuevo mu rico 🥢✨"],
+"Wabisabi":["🍱🧭🙈","Nunca hemos ido, así que podemos probar 🙈🍱"],
+"La Gran Muralla":["🏯🥡🛋️","Esto mejor en casita un día, ¿no? 🏠🥡"],
+"Kanama Noodles":["🍜🗓️🤷","¿Quizá para otra ocasión? 🗓️🍜"],
+"Buga Ramen":["🍜❓🤷‍♂️","No sé muy bien lo que es, pero había que rellenar 😂🍜"],
+"McDonald's":["🍟🍔😎","Un McNawels nunca falla 🍟😎"],
+"Burger King":["👑🍔🙏","Un Whopper por si acaso, que siempre entra bien 👑🍔"],
+"Sibaritas Klub":["✨🤨🧐","¿Estás segura? 🤨✨"]};
+var A={type:null,place:null,sweet:null,wish:""},step=0,TOTAL=4;
+var view=document.getElementById("view"),back=document.getElementById("back"),fill=document.getElementById("fill");
+function esc(s){return String(s).replace(/[&<>"]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]})}
+function go(n){step=n;render()}
+function pick(key,val,next){A[key]=val;setTimeout(function(){go(next)},220)}
+function cards(items,key,cls){return items.map(function(it,i){return '<button class="card" data-i="'+i+'"><b>'+it[1]+'</b>'+esc(it[0])+'</button>'}).join("")}
+function render(){
+ back.hidden=(step===0||step===5);fill.style.width=(step===0?0:Math.min(step,TOTAL)/TOTAL*100)+"%";
+ var h="";
+ if(step===0){
+  h='<div class="screen"><div class="hero">🎁</div><h1 style="text-align:center">Hola, Gordi</h1><p class="sub" style="text-align:center">Como pequeño regalo de cumple quiero invitarte a una cita. Como a veces se nos complica elegir sitio, tienes que hacer este pequeño cuestionario.</p><p class="sub" style="text-align:center">Puedes volver atrás cuando quieras, así que elige bien el sitio 💗</p><div class="spacer"></div><button class="btn" id="go">Empezar</button></div>';
+ }else if(step===1){
+  h='<div class="screen"><h2>¿Qué te apetece comer?</h2><p class="sub">Elige el tipo de comida.</p><div class="grid">'+TYPES.map(function(t,i){return '<button class="card" data-i="'+i+'"><b>'+t.e+'</b>'+t.id+'</button>'}).join("")+'</div></div>';
+ }else if(step===2){
+  var t=TYPES.filter(function(x){return x.id===A.type})[0];
+  h='<div class="screen"><h2>¿Y dónde, Gordi?</h2><p class="sub">Estos son los sitios de '+esc(A.type.toLowerCase())+'.</p><div class="list">'+t.p.map(function(p,i){return '<button class="card" data-i="'+i+'"><b>'+p[1]+'</b>'+esc(p[0])+'</button>'}).join("")+'</div></div>';
+ }else if(step===2.5){
+  var j=JOKES[A.place]||["💗","¡Buena elección!"];
+  h='<div class="screen"><div class="hero" style="font-size:52px;margin-top:10px">'+j[0]+'</div><p class="sub" style="text-align:center;margin-bottom:10px">'+esc(A.place)+'</p><div class="bubble">'+esc(j[1])+'</div><div class="spacer"></div><button class="btn" id="next">Seguir</button></div>';
+ }else if(step===3){
+  h='<div class="screen"><h2>¿Algo dulce para terminar?</h2><p class="sub">Para cerrar la noche como tú quieras.</p><div class="grid">'+cards(SWEET)+'</div></div>';
+ }else if(step===4){
+  h='<div class="screen"><h2>¿Algo que te apetezca especialmente?</h2><p class="sub">Si quieres, cuéntame un capricho, una idea o lo que sea. Es opcional.</p><textarea id="wish" maxlength="300" placeholder="Escribe aquí…">'+esc(A.wish)+'</textarea><button class="btn" id="fin">Ver mi plan</button></div>';
+ }else{
+  h='<div class="screen"><div class="hero" style="margin-top:6px;font-size:56px">💗</div><h1 style="text-align:center">¡Tenemos plan, Gordi!</h1><p class="sub" style="text-align:center">Así será nuestra cita.</p><div class="sum">'
+   +row("🍽️","Comida",A.type)+row("📍","Sitio",A.place)+row("🍰","Para terminar",A.sweet)+(A.wish.trim()?row("💭","Tu capricho",A.wish.trim()):"")
+   +'</div><button class="btn" id="share">Enviar a David</button><button class="btn alt" id="copy">Copiar el plan</button><p class="sub" id="msg" style="text-align:center;margin:12px 0 0"></p></div>';
+ }
+ view.innerHTML=h;bind();window.scrollTo(0,0);
+}
+function row(e,l,v){return '<div class="row"><span>'+e+'</span><div><small>'+l+'</small>'+esc(v)+'</div></div>'}
+function bind(){
+ var g=document.getElementById("go");if(g)g.onclick=function(){go(1)};
+ var nx=document.getElementById("next");if(nx)nx.onclick=function(){go(3)};
+ var cs=view.querySelectorAll(".card");
+ cs.forEach(function(c){c.onclick=function(){
+  var i=+c.dataset.i;c.classList.add("on");
+  if(step===1)pick("type",TYPES[i].id,2);
+  else if(step===2){var t=TYPES.filter(function(x){return x.id===A.type})[0];pick("place",t.p[i][0],2.5)}
+  else if(step===3)pick("sweet",SWEET[i][0],4);
+ }});
+ var f=document.getElementById("fin");if(f)f.onclick=function(){A.wish=document.getElementById("wish").value;go(5);confetti()};
+ var s=document.getElementById("share");
+ if(s){
+  s.onclick=function(){var tx=plan();
+   if(navigator.share){navigator.share({text:tx}).catch(function(){})}else{doCopy(tx)}};
+  document.getElementById("copy").onclick=function(){doCopy(plan())};
+ }
+}
+function plan(){return "Nuestra cita 💗\nComida: "+A.type+"\nSitio: "+A.place+"\nPara terminar: "+A.sweet+(A.wish.trim()?"\nMi capricho: "+A.wish.trim():"")}
+function doCopy(tx){
+ var m=document.getElementById("msg");
+ try{navigator.clipboard.writeText(tx).then(function(){m.textContent="Plan copiado. Pégalo en un mensaje."},function(){m.textContent="No se pudo copiar. Haz una captura de pantalla."})}
+ catch(e){m.textContent="No se pudo copiar. Haz una captura de pantalla."}
+}
+back.onclick=function(){if(step===3)go(2.5);else if(step===2.5)go(2);else if(step>0)go(step-1)};
+function confetti(){
+ if(window.matchMedia&&matchMedia("(prefers-reduced-motion: reduce)").matches)return;
+ var c=document.getElementById("cf"),x=c.getContext("2d");c.width=innerWidth;c.height=innerHeight;
+ var E=["💗","💖","🌸","✨","💕"],P=[];
+ for(var i=0;i<60;i++)P.push({x:Math.random()*c.width,y:-20-Math.random()*c.height*.6,v:2+Math.random()*3,s:16+Math.random()*16,w:Math.random()*6,e:E[i%5]});
+ var t0=performance.now();
+ (function f(t){x.clearRect(0,0,c.width,c.height);
+  P.forEach(function(p){p.y+=p.v;p.x+=Math.sin((t+p.w*500)/400)*1.2;x.font=p.s+"px serif";x.fillText(p.e,p.x,p.y)});
+  if(t-t0<4500)requestAnimationFrame(f);else x.clearRect(0,0,c.width,c.height)})(t0);
+}
+render();
+</script>
+</body>
+</html>
